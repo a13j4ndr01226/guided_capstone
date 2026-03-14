@@ -1,0 +1,2 @@
+pyspark==3.5.8
+python-dotenv==1.2.2

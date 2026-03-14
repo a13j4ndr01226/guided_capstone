@@ -1,4 +1,36 @@
-# Guided Capstone
+# Guided Capstone – Market Data Engineering Pipeline
+
+This project implements a multi-stage data engineering pipeline that ingests
+stock exchange market data, processes it using Apache Spark, and produces an
+analytical dataset suitable for market analysis.
+
+The pipeline performs the following stages:
+
+1. Data ingestion of semi-structured exchange submissions
+2. Transformation and validation of quote and trade records
+3. End-of-day (EOD) dataset generation
+4. Construction of an analytical quote-trade dataset with derived metrics
+
+The pipeline is executed using Apache Spark running locally on Linux,
+while data is read from and written to Azure Blob Storage.
+
+---
+
+## Pipeline Flow
+
+Raw Exchange Data
+        ↓
+Step 2 – Data Ingestion
+        ↓
+Partitioned Parquet Dataset
+        ↓
+Step 3 – End-of-Day Processing
+        ↓
+Trade and Quote EOD Datasets
+        ↓
+Step 4 – Analytical Dataset
+        ↓
+Quote-Trade Analytical Output
 
 ## Step 2 Overview
 This project implements the Step Two data ingestion pipeline for the Guided Capstone.  
@@ -20,6 +52,28 @@ The latest Step 2 ingestion run is automatically detected and used as input.
 
 ---
 
+## Step 4 Overview
+
+Step Four builds the **Quote-Trade Analytical Dataset** used for downstream
+analysis and trading signal evaluation.
+
+This stage consumes the Step 3 End-of-Day datasets and produces a unified
+analytical view combining quote events, trade events, moving averages,
+and closing prices.
+
+Key processing steps include:
+
+- Calculating a **30-minute moving average trade price** for each symbol and exchange
+- Combining quote and trade events into a **single ordered event stream**
+- Forward-filling the latest trade price and moving average for quote events
+- Joining with **previous-day closing prices**
+- Computing **bid and ask price movement relative to the closing price**
+
+The final dataset is written as partitioned Parquet files to Azure Blob Storage
+for efficient querying and analysis.
+
+---
+
 ## Data Sources
 - CSV and JSON daily exchange submissions
 - Stored in Azure Blob Storage
@@ -38,13 +92,26 @@ The latest Step 2 ingestion run is automatically detected and used as input.
 
 ---
 
-## Technologies
-- Apache Spark (local execution via WSL2)
-- PySpark
+## Environment Setup
+
+The project was developed using:
+
+- Python 3.x
+- Apache Spark 3.x
+- WSL2 (Ubuntu)
 - Azure Blob Storage
-- Hadoop Azure connector (`hadoop-azure`)
-- Python virtual environment
-- `python-dotenv` for local secret management
+
+Create and activate a virtual environment:
+
+python -m venv venv
+source venv/bin/activate
+
+Install dependencies:
+
+pip install -r requirements.txt
+
+Azure credentials are stored locally using environment variables and loaded
+via `.env` using `python-dotenv`.
 
 ---
 
@@ -65,10 +132,36 @@ output/market_exchange_eod/
 ├── quote/
 │   └── trade_dt=YYYY-MM-DD/
 
+### Step 4 Output
+output/quote-trade-analytical/
+└── date=YYYY-MM-DD/
+    ├── part-*.parquet
+    └── _SUCCESS
+
+The Step 4 dataset contains the analytical event stream with the following
+derived metrics:
+
+- `last_trade_pr` – latest trade price carried forward
+- `last_mov_avg_pr` – moving average trade price
+- `close_pr` – previous day closing price
+- `bid_pr_mv` – bid price movement relative to close
+- `ask_pr_mv` – ask price movement relative to close
+
 ## How to Run
 
+Step 2 – Ingest raw exchange data
+
 python -m src.step2
+
+
+Step 3 – Build End-of-Day datasets
+
 python -m src.step3
+
+
+Step 4 – Generate analytical quote-trade dataset
+
+spark-submit src/step4.py
 
 ## Notes
 

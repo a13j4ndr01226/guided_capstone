@@ -13,6 +13,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from utils.latest_trade_date import get_latest_trade_date
 from utils.logger_config import get_logger
 
+import configparser
+from utils.job_tracker import Tracker
+
 # ---------------------------------------------------
 # LOAD ENVIRONMENT VARIABLES
 # ---------------------------------------------------
@@ -339,6 +342,17 @@ def main():
 
     spark.stop()
 
-
 if __name__ == "__main__":
-    main()
+
+    config = configparser.ConfigParser()
+    config.read("config/config.ini")
+
+    tracker = Tracker("analytical_etl", config)
+
+    try:
+        main()
+        tracker.update_job_status("success")
+
+    except Exception as e:
+        print(e)
+        tracker.update_job_status("failed")

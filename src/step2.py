@@ -144,7 +144,8 @@ json_is_valid = json_is_q | json_is_t
 
 json_df = (
     json_map
-    .withColumn("trade_dt", F.expr("try_to_date(m['trade_dt'], 'yyyy-MM-dd')"))
+    # .withColumn("trade_dt", F.expr("try_to_date(m['trade_dt'], 'yyyy-MM-dd')"))
+    .withColumn("trade_dt", F.to_date(F.col("m.trade_dt"), "yyyy-MM-dd"))
     .withColumn("arrival_tm", F.expr("try_to_timestamp(m['file_tm'], 'yyyy-MM-dd HH:mm:ss.SSS')"))
     .withColumn("event_tm", F.expr("try_to_timestamp(m['event_tm'], 'yyyy-MM-dd HH:mm:ss.SSS')"))
     .withColumn("event_seq_nb", F.col("m")["event_seq_nb"].cast("long"))

@@ -1,0 +1,7 @@
+[postgres]
+host=
+database=
+user=
+password=
+port=
+job_tracker_table_name=

@@ -74,6 +74,28 @@ for efficient querying and analysis.
 
 ---
 
+## Step 5 Overview
+
+Step Five introduces pipeline job tracking using PostgreSQL.  
+This stage records the execution status of the analytical pipeline to provide
+basic monitoring and observability for pipeline runs.
+
+A `job_tracker` table is created in a local PostgreSQL database to store the
+status of each pipeline execution. The Step 4 analytical pipeline integrates a
+Python tracking utility that updates the job status after execution.
+
+Key functionality includes:
+
+- Generating a daily job identifier (`jobname_YYYY-MM-DD`)
+- Recording pipeline execution status (`success` or `failed`)
+- Storing the timestamp of the latest update
+- Updating existing records using PostgreSQL UPSERT (`ON CONFLICT`) logic
+
+This allows the pipeline to maintain a simple execution log for monitoring
+successful runs and identifying failures.
+
+---
+
 ## Data Sources
 - CSV and JSON daily exchange submissions
 - Stored in Azure Blob Storage
@@ -112,6 +134,10 @@ pip install -r requirements.txt
 
 Azure credentials are stored locally using environment variables and loaded
 via `.env` using `python-dotenv`.
+
+Step 5 introduces the PostgreSQL driver:
+
+psycopg2-binary (Included in teh requirements.txt)
 
 ---
 
